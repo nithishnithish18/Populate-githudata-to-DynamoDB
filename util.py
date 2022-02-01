@@ -11,6 +11,7 @@ def list_repo(since,token):
     repo_list = json.loads(content)
     return repo_list
 
+
 def extract_fields(repo_content):
     try:
         repo_dict = {
@@ -43,5 +44,39 @@ def get_repo_details(owner, name, token):
     )
 
     repo_details = json.loads(res.content)
-    return  repo_details
+    return repo_details
+
+
+def load_repos(repo_details, ghrepos_table,batch_size):
+    with ghrepos_table.batch_writer() as batch:
+        repo_count = len(repo_details)
+        for i in range(0,repo_count,batch_size):
+            print(f'processing from {i} to {i+batch_size}')
+            for repo in repo_details:
+                batch.put_item(Item=repo)
+    return 1
+
+
+
+def delete_repos(repos_details, ghrepos_table, batch_size=50):
+    with ghrepos_table.batch_writer() as batch:
+
+        repos_count = len(repos_details)
+        for i in range(0, repos_count, batch_size):
+            print(f'Processing from {i} to {i + batch_size}')
+            for repo in repos_details[i:i + batch_size]:
+                print(f'currently deleting {repo["id"]}')
+                key = {'id': repo['id']}
+                batch.delete_item(Key=key)
+    return 1
+
+
+
+
+
+
+
+
+
+
 
